@@ -22,8 +22,12 @@ from sighthouse.frontend.localapi import LocalRestAPI
 
 def add_frontent_cmd_handler(self, args: Namespace, remaining: List[str]) -> None:
     """Add a user to sighthouse frontend"""
+    basicConfig(level=INFO if not args.debug else DEBUG)
+    logger = getLogger(__name__)
 
-    database = FrontendDatabase(args.database, args.repo_url, exist_ok=True)
+    database = FrontendDatabase(
+        args.database, args.repo_url, exist_ok=True, logger=logger
+    )
     password = args.password
     if not password:
         # Auto-generate a new password
@@ -44,14 +48,24 @@ def add_frontent_cmd_handler(self, args: Namespace, remaining: List[str]) -> Non
 
 def list_frontent_cmd_handler(self, args: Namespace, remaining: List[str]) -> None:
     """List users of sighthouse frontend"""
-    database = FrontendDatabase(args.database, args.repo_url, exist_ok=True)
+    basicConfig(level=INFO if not args.debug else DEBUG)
+    logger = getLogger(__name__)
+
+    database = FrontendDatabase(
+        args.database, args.repo_url, exist_ok=True, logger=logger
+    )
     for user in database.list_users():
         print(user.name)
 
 
 def remove_frontent_cmd_handler(self, args: Namespace, remaining: List[str]) -> None:
     """Remove user from sighthouse frontend"""
-    database = FrontendDatabase(args.database, args.repo_url, exist_ok=True)
+    basicConfig(level=INFO if not args.debug else DEBUG)
+    logger = getLogger(__name__)
+
+    database = FrontendDatabase(
+        args.database, args.repo_url, exist_ok=True, logger=logger
+    )
     user = database.get_user_by_name(args.username)
     if not user:
         print(f"Error: Fail to find user '{args.username}'")
@@ -71,7 +85,10 @@ def run_celery_worker(url: str, ghidradir: str, worker: Optional[int] = None) ->
         args += ["--worker", str(worker)]
 
     process = Popen(args)
-    process.wait()
+    try:
+        process.wait()
+    except KeyboardInterrupt:
+        pass  # Silent keyboard interrupt since we are going to shutdown
 
 
 def start_frontent_cmd_handler(self, args: Namespace, remaining: List[str]) -> None:
@@ -79,7 +96,9 @@ def start_frontent_cmd_handler(self, args: Namespace, remaining: List[str]) -> N
     basicConfig(level=INFO if not args.debug else DEBUG)
     logger = getLogger(__name__)
 
-    database = FrontendDatabase(args.database, args.repo_url, exist_ok=True)
+    database = FrontendDatabase(
+        args.database, args.repo_url, exist_ok=True, logger=logger
+    )
     if args.ghidra_dir is None:
         print("Error: GHIDRA_INSTALL_DIR or ghidra-dir not set")
         return
@@ -98,6 +117,7 @@ def start_frontent_cmd_handler(self, args: Namespace, remaining: List[str]) -> N
         target=run_celery_worker, args=(args.worker_url, args.ghidra_dir, args.worker)
     )
 
+    print(f"SightHouse frontend server listening on http://{api.host}:{api.port}/")
     api.start()
     api2.start()
     t3.start()
@@ -124,9 +144,13 @@ def start_frontent_cmd_handler(self, args: Namespace, remaining: List[str]) -> N
 def reset_password_frontent_cmd_handler(
     self, args: Namespace, remaining: List[str]
 ) -> None:
-    """Reset password of a user of  sighthouse frontend"""
+    """Reset password of a user of sighthouse frontend"""
+    basicConfig(level=INFO if not args.debug else DEBUG)
+    logger = getLogger(__name__)
 
-    database = FrontendDatabase(args.database, args.repo_url, exist_ok=True)
+    database = FrontendDatabase(
+        args.database, args.repo_url, exist_ok=True, logger=logger
+    )
     password = args.password
     if not password:
         # Auto-generate a new password

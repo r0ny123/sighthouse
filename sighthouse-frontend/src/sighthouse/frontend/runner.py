@@ -70,7 +70,7 @@ class LocalApiClient:
             response = requests.post(
                 url,
                 headers={"Content-Type": "application/json"},
-                json={"functions": batch},
+                json={"functions": batch},  # type: ignore[dict-item]
             )
 
             self.logger.info(
@@ -112,7 +112,7 @@ class LocalApiClient:
             response = requests.post(
                 url,
                 headers={"Content-Type": "application/json"},
-                json={"matches": batch},
+                json={"matches": batch},  # type: ignore[dict-item]
             )
             self.logger.info(
                 f"Batch Update Matches Response Code :: {response.status_code}"

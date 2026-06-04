@@ -1,0 +1,93 @@
+stages:
+  - docker-ghidra
+  - test
+  - build
+  - docker
+  - deploy
+
+variables:
+  PACKAGE_VERSION: "1.0.3"
+
+
+test-sighthouse:
+  stage: test
+  image:
+    name: docker.qb/sighthouse/sighthouse/ghidraheadless-python3-ci:${PACKAGE_VERSION}
+    entrypoint: [""]
+  script:
+    - make install-dev || true
+    - GHIDRA_INSTALL_DIR=/ghidra make test
+  rules:
+    - if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == "testing"'
+
+
+build:
+  image: python:latest
+  stage: build
+  script:
+    - make install-dev
+    - make type-check
+    - make test 
+
+pages:
+  stage: deploy
+  image: python:latest
+  script:
+    - cd doc 
+    - make install 
+    - make build 
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - doc/.cache/ 
+  artifacts:
+    paths:
+      - doc/public/
+  publish: doc/public
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "testing"'
+  
+docker_ghidra_generation:  
+  stage: docker-ghidra
+  image: docker:latest
+  services:
+    - name: docker:dind
+      alias: docker
+  before_script:
+    - mkdir -p /etc/docker/certs.d/$CI_REGISTRY
+    - echo "$REGISTRY_CA_CERT" > /etc/docker/certs.d/$CI_REGISTRY/ca.crt
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd docker
+    - ./docker-ghidra/build.sh
+    - ./docker-ghidra-python3/build.sh
+    - ./publish-ghidra.sh
+  after_script:
+    - docker logout $CI_REGISTRY
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "testing"'
+    #- if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+  tags:
+    - dind  
+
+docker_generation:  
+  stage: docker
+  image: docker:latest
+  services:
+    - name: docker:dind
+      alias: docker
+  before_script:
+    - mkdir -p /etc/docker/certs.d/$CI_REGISTRY
+    - echo "$REGISTRY_CA_CERT" > /etc/docker/certs.d/$CI_REGISTRY/ca.crt
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+  script:
+    - cd docker
+    - ./build.sh
+    - ./publish.sh
+  after_script:
+    - docker logout $CI_REGISTRY
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "testing"'
+    #- if: '$CI_MERGE_REQUEST_TARGET_BRANCH_NAME == $CI_DEFAULT_BRANCH'
+  tags:
+    - dind  

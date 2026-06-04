@@ -1,34 +1,25 @@
 # check=skip=InvalidDefaultArgInFrom
 ARG BASE_URL
 
-FROM ${BASE_URL}/ghidraheadless-python3:1.0.3
+FROM ${BASE_URL}/ghidraheadless-python3:1.0.4 AS builder
 
 USER user
-
 COPY --chown=user build /build
 
+RUN python3 -m pip install --user --break-system-packages \
+        /build/sighthouse-cli \
+        /build/sighthouse-core \
+        /build/sighthouse-pipeline \
+        /build/sighthouse-frontend \
+        /build/sighthouse-client \
+    && python3 -m pip install --user --break-system-packages /build/.[all] \
+    && find /home/user/.cache/pip -mindepth 1 -delete 2>/dev/null || true
 
 
-#dev time
-WORKDIR /build/sighthouse-cli
-RUN python3 -m pip install --user  --break-system-packages .
-WORKDIR /build/sighthouse-core
-RUN python3 -m pip install --user  --break-system-packages .
-WORKDIR /build/sighthouse-pipeline
-RUN python3 -m pip install --user  --break-system-packages .
+FROM ${BASE_URL}/ghidraheadless-python3:1.0.4
 
-
-WORKDIR /build/sighthouse-frontend
-RUN python3 -m pip install --user  --break-system-packages .
-
-WORKDIR /build/sighthouse-client
-RUN python3 -m pip install --user  --break-system-packages .
-
-WORKDIR /build/
-#RUN python3 -m pip install --user  --break-system-packages .[pipeline]
-RUN python3 -m pip install --user  --break-system-packages .[all]
-
-#RUN rm -rf /build
+USER user
+COPY --from=builder --chown=user /home/user/.local /home/user/.local
 
 COPY entrypoint.sh /entrypoint.sh
 

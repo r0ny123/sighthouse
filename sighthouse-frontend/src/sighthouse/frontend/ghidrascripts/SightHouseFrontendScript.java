@@ -467,6 +467,10 @@ class SightHouseLoader extends AbstractProgramLoader {
 
     // Iterate over all the sections 
     for (SightHouseSection section : sg.getSections()) {
+      // Skip empty section
+      if (section.size() <= 0) {
+        continue;
+      }
       try {
         String perms = section.getPerms();
         // If file offset is inferior to 0 it means uninit data
@@ -505,8 +509,11 @@ class SightHouseLoader extends AbstractProgramLoader {
         }
       }
       catch (AddressOverflowException e) {
-        throw new LoadException("Invalid address range specified: start:" + section.getStart() +
+        throw new LoadException("Invalid address range specified for section '"+section.getName()+"': start:" + section.getStart() +
             ", length:" + section.size() + " - end address exceeds address space boundary!");
+      } catch (ArrayIndexOutOfBoundsException e) {
+        throw new LoadException("Index out of bound for section '"+section.getName()+"': start:" + section.getStart() +
+            ", length:" + section.size() + ", offset: " + section.getFileOffset());
       }
     }
 

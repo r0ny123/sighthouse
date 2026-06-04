@@ -15,7 +15,9 @@ class Database:
     including SQLite, PostgreSQL, and MySQL.
     """
 
-    def __init__(self, uri: str, exist_ok: bool = False):
+    def __init__(
+        self, uri: str, exist_ok: bool = False, logger: Optional[Logger] = None
+    ):
         """
         Initialize a Database object with URI and Logger, optionally creating new DB.
 
@@ -23,8 +25,11 @@ class Database:
             uri (str): The URI string used to parse connection parameters.
             exist_ok (bool): If True, allows the creation of new databases.
                              Defaults to False.
+            logger (logging.Logger): Logger object to use to log errors if supplied.
+                             Defaults to None.
         """
         self._lock: Lock = Lock()
+        self._logger: Optional[Logger] = logger
 
         self._uri: str = uri
         self._type: Optional[str] = None
@@ -139,7 +144,11 @@ class Database:
                     self._db.commit()
                     try:
                         return cursor.fetchone()[0] if cursor.rowcount > 0 else None
-                    except Exception:
+                    except Exception as e:
+                        if self._logger is not None:
+                            self._logger.debug(
+                                f"Database execute() failed: Query '{adapted_query}', Params '{params}'."
+                            )
                         return None
                 else:
                     if params:
@@ -153,6 +162,10 @@ class Database:
                         else None
                     )
             except Exception as e:
+                if self._logger is not None:
+                    self._logger.debug(
+                        f"Database execute() failed: Query '{adapted_query}', Params '{params}'."
+                    )
                 self._db.rollback()
                 raise e
 
@@ -193,17 +206,25 @@ class Database:
         Returns:
             list[tuple]: Result set from the executed query.
         """
+        query = self._adapt_query(request)
         with self.__get_cursor() as cursor:
-            cursor.execute(self._adapt_query(request), parameters)
-            match mode:
-                case "all":
-                    return cursor.fetchall()
-                case "one":
-                    return cursor.fetchone()
-                case "many":
-                    return cursor.fetchmany()
-                case _:
-                    raise ValueError("fetch mode must be 'all', 'one', or 'many'")
+            try:
+                cursor.execute(query, parameters)
+                match mode:
+                    case "all":
+                        return cursor.fetchall()
+                    case "one":
+                        return cursor.fetchone()
+                    case "many":
+                        return cursor.fetchmany()
+                    case _:
+                        raise ValueError("fetch mode must be 'all', 'one', or 'many'")
+            except Exception as e:
+                if self._logger is not None:
+                    self._logger.debug(
+                        f"Database fetch() failed: Query '{query}', Params '{parameters}'."
+                    )
+                raise e
 
     def __repr__(self) -> str:
         """

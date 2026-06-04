@@ -79,7 +79,7 @@ class FrontendRestAPI(ServerThread):
 
         super().__init__(self.__app, host, port)
 
-    def __register_user_stuff(self):
+    def __register_user_stuff(self) -> None:
         """Register login manager handler to flask"""
 
         @self.__login_manager.user_loader
@@ -104,7 +104,7 @@ class FrontendRestAPI(ServerThread):
                 return jsonify({"error": e.description}), e.code
             return jsonify({"error": str(e)}), 500
 
-    def __register_routes(self):
+    def __register_routes(self) -> None:
 
         @self.__app.route("/api/v1/ping", methods=["GET"])
         def ping() -> Tuple[Response, int]:
@@ -324,7 +324,7 @@ class FrontendRestAPI(ServerThread):
                 return jsonify({"error": "The given file does not exists"}), 404
             try:
                 if not self.__database.delete_file(file):
-                    return jsonify({"error", "Fail to delete file from database"}), 500
+                    return jsonify({"error": "Fail to delete file from database"}), 500
             except RestError as e:
                 return jsonify({"error": e.error}), e.code or 500
 

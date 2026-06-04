@@ -1,6 +1,6 @@
 ARG BASE_URL
 
-FROM ${BASE_URL}/ghidraheadless:1.0.3
+FROM ${BASE_URL}/ghidraheadless:1.0.4
 
 USER 0
 RUN apt-get -y update && apt-get install --no-install-recommends -y libsqlite3-0 \
@@ -9,9 +9,10 @@ RUN apt-get -y update && apt-get install --no-install-recommends -y libsqlite3-0
                                             fontconfig \
                                             fonts-dejavu \
                                             python3-dev \
+                                            python3-venv \
                                             python3-pip \
                                             make \
-                                            autotools-dev \ 
+                                            autotools-dev \
                                             autoconf \
                                             build-essential \
                                             libc6-dev-i386 \

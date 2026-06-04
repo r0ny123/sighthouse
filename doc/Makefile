@@ -11,6 +11,7 @@ install: # Install requirements for building the doc
 	@if [ ! -d "./venv" ]; then python3 -m venv venv; fi
 	@. venv/bin/activate && pip install mkdocs-material mkdocs-plugin-inline-svg mkdocs-to-pdf 'mkdocstrings[python]' griffe-inherited-docstrings
 	@# We need to install sighthouse to generate API reference because mkdocstrings does not handle namespace package correctly
+	@. ./venv/bin/activate && cd ../sighthouse-cli && pip install .
 	@. ./venv/bin/activate && cd ../sighthouse-core && pip install .
 	@. ./venv/bin/activate && cd ../sighthouse-client && pip install .
 	@. ./venv/bin/activate && cd ../sighthouse-frontend && pip install .

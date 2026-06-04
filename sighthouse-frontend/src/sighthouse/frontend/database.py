@@ -2,6 +2,7 @@
 
 from typing import Optional, List, Dict, Union
 from threading import Lock
+from logging import Logger
 from pathlib import Path
 import json
 
@@ -25,8 +26,26 @@ class FrontendDatabase(Database):
     USER_UPLOAD_DIR = "/uploads"
     USER_LOGS_DIR = "/logs"
 
-    def __init__(self, uri: str, repo: str, exist_ok: bool = False):
-        super().__init__(uri, exist_ok=exist_ok)
+    def __init__(
+        self,
+        uri: str,
+        repo: str,
+        exist_ok: bool = False,
+        logger: Optional[Logger] = None,
+    ):
+        """
+        Initialize a FrontendDatabase object with URI, a Repository and Logger,
+        optionally creating new DB.
+
+        Args:
+            uri (str): The URI string used to parse connection parameters.
+            repo (str): The URI string used for the repository.
+            exist_ok (bool): If True, allows the creation of new databases.
+                             Defaults to False.
+            logger (logging.Logger): Logger object to use to log errors if supplied.
+                             Defaults to None.
+        """
+        super().__init__(uri, exist_ok=exist_ok, logger=logger)
 
         self.repo = Repo(repo, exist_ok=exist_ok, secure=False)
 
@@ -161,9 +180,9 @@ class FrontendDatabase(Database):
             id {auto_increment} PRIMARY KEY,
             name TEXT NOT NULL,
             program INTEGER,
-            file_offset INTEGER NOT NULL,
-            start INTEGER NOT NULL,
-            "end" INTEGER NOT NULL,
+            file_offset BIGINT NOT NULL,
+            start BIGINT NOT NULL,
+            "end" BIGINT NOT NULL,
             perms TEXT NOT NULL,
             kind TEXT NOT NULL,
             FOREIGN KEY (program) REFERENCES Program(id) ON DELETE CASCADE
@@ -174,7 +193,7 @@ class FrontendDatabase(Database):
         CREATE TABLE IF NOT EXISTS Function (
             id {auto_increment} PRIMARY KEY,
             name TEXT NOT NULL,
-            "offset" INTEGER NOT NULL,
+            "offset" BIGINT NOT NULL,
             section INTEGER NOT NULL,
             details TEXT NOT NULL,
             FOREIGN KEY (section) REFERENCES Section(id) ON DELETE CASCADE

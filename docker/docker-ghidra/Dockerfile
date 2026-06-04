@@ -1,7 +1,6 @@
-#FROM openjdk:21-jdk-slim
 FROM eclipse-temurin:21-jdk-noble
 
-LABEL version="1.0.3"
+LABEL version="1.0.4"
 LABEL name="ghidraheadless"
 
 ENV VERSION 11.4.1_PUBLIC
@@ -18,16 +17,15 @@ RUN apt-get update && apt-get install -y wget unzip --no-install-recommends \
     && echo "===> Clean up unnecessary files..." \
     && apt-get purge -y --auto-remove wget unzip \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives /tmp/* /var/tmp/* /ghidra/docs /ghidra/Extensions/Eclipse /ghidra/licenses
+    && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives /tmp/* /var/tmp/* \
+               /ghidra/docs /ghidra/Extensions/Eclipse /ghidra/licenses \
+               /ghidra/GPL
 
-# Remove ubuntu user
-RUN userdel ubuntu
-# Create a ghidra user
-RUN useradd --create-home -u 1000 -m user && chown -R user:user /ghidra
+RUN userdel ubuntu 2>/dev/null || true \
+    && useradd --create-home -u 1000 -m user \
+    && chown -R user:user /ghidra
+
 USER user
-
 WORKDIR /work
-
 COPY entrypoint.sh /entrypoint.sh
-
 ENTRYPOINT ["/entrypoint.sh"]

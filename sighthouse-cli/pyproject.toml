@@ -7,9 +7,9 @@ authors = [
 ]
 
 license = {file="LICENSE"}
-version = "1.0.3"
-dependencies = [
-]
+version = "1.0.4"
+requires-python = ">= 3.11"
+dependencies = []
 
 [tool.setuptools.packages.find]
 where = ["src"]

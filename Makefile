@@ -1,4 +1,4 @@
-VERSION = 1.0.3
+VERSION = 1.0.4
 
 default: help
 
@@ -73,6 +73,11 @@ type-check: # Run mypy.
 	                                         --follow-untyped-imports \
 	                                         --config-file sighthouse-frontend/pyproject.toml \
 	                                         sighthouse-frontend
+	@. ./venv/bin/activate && python -m mypy --exclude build --exclude tests \
+                                           --check-untyped-defs \
+                                           --follow-untyped-imports \
+                                           --config-file sighthouse-cli/pyproject.toml \
+                                           sighthouse-cli
 
 test: # Run pytest.
 	@echo "[+] Run tests"

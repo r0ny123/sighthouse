@@ -34,6 +34,16 @@ class ServerThread(Thread):
             self.__host, self.__port, self.__app, threaded=True
         )
 
+    @property
+    def host(self) -> str:
+        """Return the address on which this server is listening"""
+        return self.__host
+
+    @property
+    def port(self) -> int:
+        """Return the port on which the server is listening"""
+        return self.__port
+
     def run(self) -> None:
         """Starts the HTTP server, listening for incoming requests
         and serving the Flask application."""
